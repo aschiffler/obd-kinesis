@@ -1,0 +1,32 @@
+#!/bin/bash
+# update the instance
+yum update -y
+ 
+# install jdk
+yum install java-1.8.0-openjdk -y
+yum install java-1.8.0-openjdk-devel -y
+yum install git -y
+ 
+update-alternatives --set java /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.25-0.b18.4.amzn1.x86_64/jre/bin/java
+ 
+cd /home/ec2-user
+ 
+# install Apache Maven
+wget http://www.dsgnwrld.com/am/maven/maven-3/3.2.3/binaries/apache-maven-3.2.3-bin.tar.gz
+tar -xzvf apache-maven-3.2.3-bin.tar.gz
+ 
+# get the code
+git clone https://github.com/awslabs/aws-big-data-blog.git
+cp ./aws-big-data-blog/aws-blog-kinesis-data-visualization/TwitterProducer/* /home/ec2-user -r
+ 
+# create the config file
+echo "aws.streamName = Name of Your Amazon Kinesis Stream" > AwsUserData.properties
+echo "aws.regionName = Name of your region" >> AwsUserData.properties
+echo "twitter.consumerKey = Twitter Consumer Key" >> AwsUserData.properties
+echo "twitter.consumerSecret = Twitter Consumer Secret Key" >> AwsUserData.properties
+echo "twitter.token = Twitter Access Token" >> AwsUserData.properties
+echo "twitter.secret = Twitter Access Token Secret" >> AwsUserData.properties
+echo "twitter.hashtags = " >> AwsUserData.properties
+ 
+# do the build
+/home/ec2-user/apache-maven-3.2.3/bin/mvn package
