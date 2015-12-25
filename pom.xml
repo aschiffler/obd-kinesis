@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>eu.roschi</groupId>
+    <groupId>eu.roschi.obdkinesis</groupId>
     <artifactId>obdkinesis</artifactId>
     <packaging>jar</packaging>
     <name>OBD Kinesis</name>
@@ -15,7 +15,7 @@
     </scm>
 
     <licenses>
-        <license>
+        <license> 
             <name>Amazon Software License</name>
             <url>https://aws.amazon.com/asl</url>
             <distribution>repo</distribution>
@@ -114,9 +114,11 @@
                         <artifactId>exec-maven-plugin</artifactId>
                         <version>1.2.1</version>
                         <configuration>
-                            <mainClass>HttpReferrerCounterApplication</mainClass>
-				<arguments>
-				</arguments>
+                            <mainClass>eu.roschi.obdkinesis.HttpReferrerCounterApplication</mainClass>
+								<arguments>
+									<argument>${window-with}</argument>
+									<argument>${update-rate}</argument>
+								</arguments>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -129,10 +131,10 @@
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
+                        <artifactId>exec-maveneu.roschi.obdkinesis-plugin</artifactId>
                         <version>1.2.1</version>
                         <configuration>
-                            <mainClass>WebServer</mainClass>
+                            <mainClass>eu.roschi.obdkinesis.WebServer</mainClass>
                             <arguments>
                                 <!-- Start Jetty on port 80 -->
                                 <argument>80</argument>
