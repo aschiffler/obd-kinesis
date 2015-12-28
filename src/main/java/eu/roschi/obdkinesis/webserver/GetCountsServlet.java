@@ -92,9 +92,9 @@ public class GetCountsServlet extends HttpServlet {
         Calendar c = Calendar.getInstance();
         c.add(Calendar.SECOND, -1 * rangeInSeconds);
         Date startTime = c.getTime();
-        if (LOG.isDebugEnabled()) {
+        //if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("Querying for counts of resource %s since %s", resource, DATE_FORMATTER.get().format(startTime)));
-        }
+        //}
 
         DynamoDBQueryExpression<HttpReferrerPairsCount> query = new DynamoDBQueryExpression<>();
         HttpReferrerPairsCount hashKey = new HttpReferrerPairsCount();

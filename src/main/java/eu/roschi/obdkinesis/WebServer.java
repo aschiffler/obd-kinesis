@@ -44,13 +44,13 @@ public class WebServer {
      * @throws Exception Error starting the web server.
      */
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
+        if (args.length != 1) {
             System.err.println("Usage: " + WebServer.class
-                    + " <port number> <directory for static content>");
+                    + " <directory for static content>");
             System.exit(1);
         }
-        Server server = new Server(Integer.parseInt(args[0]));
-        String wwwroot = args[1];
+        Server server = new Server(8080);
+        String wwwroot = args[0];
         String countsTableName = "obd_kinesis_count";
         Region region = SampleUtils.parseRegion("us-west-2");
 

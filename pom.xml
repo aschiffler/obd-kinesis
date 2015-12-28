@@ -131,15 +131,12 @@
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maveneu.roschi.obdkinesis-plugin</artifactId>
+                        <artifactId>exec-maven-plugin</artifactId>
                         <version>1.2.1</version>
                         <configuration>
                             <mainClass>eu.roschi.obdkinesis.WebServer</mainClass>
                             <arguments>
-                                <!-- Start Jetty on port 80 -->
-                                <argument>80</argument>
-                                <!-- Serve static resources from their root -->
-                                <argument>${project.basedir}/src/static-content/wwwroot</argument>
+                                <argument>${project.basedir}/src/main/static-content/wwwroot</argument>
                             </arguments>
                         </configuration>
                     </plugin>

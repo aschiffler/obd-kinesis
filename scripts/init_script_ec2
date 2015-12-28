@@ -31,4 +31,4 @@ cd ../obd-kninesis
 # ToDo via SSH:
 # input credentials in .aws/credentials 
 # start application 'counter':
-# mvn -Dwindow-with 30000 -Dupdate-rate 2000 -Pcounter exec:java
+# /home/ec2-user/apache-maven-3.3.9/bin/mvn -Dwindow-with=30000 -Dupdate-rate=2000 -Pcounter exec:java

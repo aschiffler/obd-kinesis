@@ -41,50 +41,16 @@ var Graph = function() {
      */
     inject : function() {
       graph = $.plot("#graph", {},
-          {
-            // Define the colors and y-axis margins for the graph.
-            grid : {
-              borderWidth : 1,
-              minBorderMargin : 20,
-              labelMargin : 10,
-              backgroundColor : {
-                colors : [ "#fff", "#fff5e6" ]
-              },
-              margin : {
-                top : 8,
-                bottom : 20,
-                left : 20
-              },
-            },
-            // Do not render shadows for our series lines. This just slows us
-            // down.
-            series : {
-              shadowSize : 0
-            },
-            // Set up the y-axis to initially show 0-10. This is dynamically
-            // adjusted as data is updated.
-            yaxis : {
-              min : 0,
-              max : 10
-            },
-            // The x-axis is time-based. The local browser's timezone will be
-            // used to interpret timestamps. The range is dynamically adjusted
-            // as data is updated.
-            xaxis : {
-              mode : "time",
-              timezone : "browser",
-              timeformat : "%M:%S",
-              min : (new Date()).getTime()
-                  - (totalDurationToGraphInSeconds * 1000),
-              max : (new Date()).getTime()
-            },
-            // Show the legend of unique referrers in the upper-right corner of
-            // the graph.
-            legend : {
-              show : true,
-              position : "nw"
-            }
-          });
+    		  {
+    	  		series: {
+    	  		  stack:0,
+    	  		  bars: {show: true,
+    	  		         align: "center",
+    	  		         barWidth: 0.4}},
+    	  		xaxis: { },
+    	  		yaxis: { },
+    	  		legend:{ },
+          	});
 
       // Create y-axis label and inject it into the graph container
       var yaxisLabel = $("<div class='axisLabel yaxisLabel'></div>").text(
@@ -110,6 +76,7 @@ var Graph = function() {
         // Flot data values are stored as the second element of each data array
         return tuple[1];
       };
+      /*
       var max = Number.MIN_VALUE;
       flotData.forEach(function(d) {
         m = Math.max.apply(Math, d.data.map(getValue));
@@ -130,7 +97,7 @@ var Graph = function() {
       graph.getOptions().xaxes[0].min = (new Date()).getTime()
           - (totalDurationToGraphInSeconds * 1000),
           graph.getOptions().xaxes[0].max = (new Date()).getTime()
-
+*/
       // Redraw the graph data and axes
       graph.draw();
       graph.setupGrid();
@@ -143,11 +110,11 @@ var Graph = function() {
  */
 var UIHelper = function(data, graph) {
   // How frequently should we poll for new data and update the graph?
-  var updateIntervalInMillis = 400;
+  var updateIntervalInMillis = 5000;
   // How often should the top N display be updated?
-  var intervalsPerTopNUpdate = 5;
+  var intervalsPerTopNUpdate = 1;
   // How far back should we fetch data at every interval?
-  var rangeOfDataToFetchEveryIntervalInSeconds = 2;
+  var rangeOfDataToFetchEveryIntervalInSeconds = 6;
   // What should N be for our Top N display?
   var topNToCalculate = 3;
   // Keep track of when we last updated the top N display.
@@ -155,7 +122,7 @@ var UIHelper = function(data, graph) {
   // Controls the update loop.
   var running = true;
   // Set the active resource to query for counts when updating data.
-  var activeResource = "/index.html";
+  var activeResource = "A";
 
   /**
    * Fetch counts from the last secondsAgo seconds.
@@ -174,8 +141,9 @@ var UIHelper = function(data, graph) {
       data.addNewData(newData);
       // Remove data that's outside the window of data we are displaying. This
       // is unnecessary to keep around.
-      data.removeDataOlderThan((new Date()).getTime()
+      /*data.removeDataOlderThan((new Date()).getTime()
           - (graph.getTotalDurationToGraphInSeconds() * 1000));
+          */
       if (callback) {
         callback();
       }
@@ -407,7 +375,7 @@ var CountData = function() {
     if (data[referrer]) {
       totals[referrer] = 0;
       $.each(data[referrer].data, function(ts, count) {
-        totals[referrer] += count;
+        totals[referrer] = count;
       });
     } else {
       // No data for the referrer, remove the total if it exists
@@ -490,17 +458,20 @@ var CountData = function() {
         setLastUpdatedBy(count.host);
         // Add individual referrer counts
         count.referrerCounts.forEach(function(refCount) {
+        	//if (refCount.referrer.substring(3, 6) == "RPM"){
           // Reuse or create a new data series entry for this referrer
           refData = data[refCount.referrer] || {
             label : refCount.referrer,
             data : {}
           };
+        	
           // Set the count
           refData.data[count.timestamp] = refCount.count;
           // Update the referrer data
           data[refCount.referrer] = refData;
           // Update our totals whenever new data is added
           updateTotal(refCount.referrer);
+        	//}
         });
       });
     },
@@ -545,8 +516,29 @@ var CountData = function() {
      * @returns {object[]} Array of data series for every referrer we know of.
      */
     toFlotData : function() {
-      flotData = [];
-      $.each(data, function(referrer, referrerData) {
+      load_totals ={};
+      $.each(totals,function(n,i){
+        if (n.substring(3,7)=="LOAD"){
+         load_totals[n]=i;
+        }
+      });
+      //
+      speed_totals ={};
+      $.each(totals,function(n,i){
+        if (n.substring(3,6)=="RPM"){
+         speed_totals[n]=i;
+        }
+      });
+      //
+      sum_count = $.map(load_totals,function(i,n){return [i] }).reduce(function(pv, cv) { return pv + cv; }, 0);
+      load_data = $.map(load_totals,function(i,n){return [[parseInt(n.substring(0,2))-0.25,i/sum_count*100]] });
+      //
+      sum_count = $.map(speed_totals,function(i,n){return [i] }).reduce(function(pv, cv) { return pv + cv; }, 0);
+      speed_data = $.map(speed_totals,function(i,n){return [[parseInt(n.substring(0,2))+0.25,i/sum_count*100]] });
+
+      flotData = [{label: "RPM",data: speed_data},{label: "LOAD",data: load_data}];
+    /*flotData =[];
+      $.each(data, function(referrer,referrerData) {
         flotData.push({
           label : referrer,
           // Flot expects time series data to be in the format:
@@ -555,7 +547,7 @@ var CountData = function() {
             return [ [ parseInt(ts), count ] ];
           })
         });
-      });
+      });*/
       return flotData;
     }
   }
