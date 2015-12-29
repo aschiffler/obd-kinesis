@@ -47,16 +47,24 @@ var Graph = function() {
     	  		  bars: {show: true,
     	  		         align: "center",
     	  		         barWidth: 0.4}},
-    	  		xaxis: { },
-    	  		yaxis: { },
-    	  		legend:{ },
+    	  		xaxis: {
+    	  		  axisLabel: "Klassen der Messwerte",
+                  axisLabelUseCanvas: true,
+                  axisLabelFontSizePixels: 12,
+                  axisLabelFontFamily: 'Verdana, Arial',
+                  axisLabelPadding: 10
+    	  		   },
+    	  		yaxis: {
+                  axisLabel: "Relative Häufigkeit",
+                  axisLabelUseCanvas: true,
+                  axisLabelFontSizePixels: 12,
+                  axisLabelFontFamily: 'Verdana, Arial',
+                  axisLabelPadding: 10
+    	  		   },
+    	  		legend:{
+                  position: "nw"
+    	  		   },
           	});
-
-      // Create y-axis label and inject it into the graph container
-      var yaxisLabel = $("<div class='axisLabel yaxisLabel'></div>").text(
-          "Requests sent from referrer over 10 seconds").appendTo("#graph");
-      // Center the y-axis along the left side of the graph
-      yaxisLabel.css("margin-top", yaxisLabel.width() / 2 - 20);
     },
 
     /**
@@ -76,28 +84,12 @@ var Graph = function() {
         // Flot data values are stored as the second element of each data array
         return tuple[1];
       };
-      /*
-      var max = Number.MIN_VALUE;
-      flotData.forEach(function(d) {
-        m = Math.max.apply(Math, d.data.map(getValue));
-        max = Math.max(m, max);
-      });
-      var min = Number.MAX_VALUE;
-      flotData.forEach(function(d) {
-        m = Math.min.apply(Math, d.data.map(getValue));
-        min = Math.min(m, min);
-      });
+      graph.getOptions().yaxes[0].max = 100;
+      graph.getOptions().yaxes[0].min = 0;
 
-      // Adjust the y-axis for min/max of our new data
-      graph.getOptions().yaxes[0].max = Math.min(max, max)
-      graph.getOptions().yaxes[0].min = min
+      graph.getOptions().xaxes[0].min = -1;
+      graph.getOptions().xaxes[0].max = 12;
 
-      // Adjust the x-axis to move in real time and show at most the total
-      // duration to graph as configured above
-      graph.getOptions().xaxes[0].min = (new Date()).getTime()
-          - (totalDurationToGraphInSeconds * 1000),
-          graph.getOptions().xaxes[0].max = (new Date()).getTime()
-*/
       // Redraw the graph data and axes
       graph.draw();
       graph.setupGrid();
@@ -122,7 +114,7 @@ var UIHelper = function(data, graph) {
   // Controls the update loop.
   var running = true;
   // Set the active resource to query for counts when updating data.
-  var activeResource = "A";
+  var activeResource = "undefined";
 
   /**
    * Fetch counts from the last secondsAgo seconds.
@@ -136,6 +128,9 @@ var UIHelper = function(data, graph) {
    */
   var updateData = function(resource, secondsAgo, callback) {
     // Fetch data from our data provider
+    activeResource = document.getElementById("myVIN").value;
+    if (activeResource==""){activeResource="undefined";}
+    document.getElementById("return_VIN").innerHTML = "Nutze Vehicle ID: " +activeResource;
     provider.getData(resource, secondsAgo, function(newData) {
       // Store the data locally
       data.addNewData(newData);
@@ -213,7 +208,7 @@ var UIHelper = function(data, graph) {
    *          provided the last updated label will not be shown.
    */
   var setLastUpdatedBy = function(s) {
-    var message = s ? "Data last updated by: " + s : "";
+    var message = s ? "Letztes Update von: " + s : "";
     $("#updatedBy").text(message);
   }
 
@@ -235,12 +230,8 @@ var UIHelper = function(data, graph) {
      * calculated values.
      */
     decorate : function() {
-      setDescription("This graph displays the last "
-          + graph.getTotalDurationToGraphInSeconds()
-          + " seconds of counts as calculated by the Amazon Kinesis Data Visualization Sample Application.");
-      $("#topNDescription").text(
-          "Top " + topNToCalculate + " referrers by counts (Updated every "
-              + (intervalsPerTopNUpdate * updateIntervalInMillis) + "ms):");
+      setDescription("Relative Häufigkeit der Messwerte RPM / LOAD im Zeitfenster 60 s. Aktualisierung alle "+updateIntervalInMillis+" ms");
+      $("#topNDescription").text("Statistische Kenngrößen");
     },
 
     /**
@@ -323,7 +314,7 @@ var CountDataProvider = function() {
      *          range_in_seconds The range in seconds, since now, to request
      *          counts for.
      * @param {function}
-     *          callback The function to call when data has been returned from
+     *          callback The function to cavar load_data =[];ll when data has been returned from
      *          the endpoint.
      */
     getData : function(resource, range_in_seconds, callback) {
@@ -358,6 +349,11 @@ var CountData = function() {
   //   "http://www.amazon.com" : 102333
   // }
   var totals = {};
+  var load_totals = {};
+  var speed_totals = {};
+  var load_data =[];
+  var speed_data =[];
+
 
   // What host last updated the counts? This is useful to visualize how failover
   // happens when a worker is replaced.
@@ -437,7 +433,64 @@ var CountData = function() {
         return b.count - a.count;
       });
       // Return the first N
-      return sorted.slice(0, Math.min(n, sorted.length));
+      //return sorted.slice(0, Math.min(n, sorted.length));
+      var results = [];
+      var useage = 0;
+      // LOAD
+      var mittelwert = 0;
+      var standardabweichung = 0;
+      var woeblung = 0;
+      var temp = $.map(load_totals,function(i,n){return [[parseInt(n.substring(0,2)),i]]});
+      var N = $.map(load_totals,function(i,n){return [i] }).reduce(function(pv, cv) { return pv + cv; }, 0);
+      //
+      for (var i=0;i<temp.length;i++){
+          mittelwert+=temp[i][0]*temp[i][1];
+        }
+      mittelwert /= N;
+      results.push({"referrer":"LOAD Mittelwert [%] ","count":(mittelwert*10).toFixed(0)});
+      for (var i=0;i<temp.length;i++){
+          standardabweichung+=Math.pow(temp[i][0]-mittelwert,2)*temp[i][1];
+        }
+      standardabweichung /= N;
+      standardabweichung = Math.sqrt(standardabweichung);
+      if (standardabweichung==0){standardabweichung=0.01;}
+      results.push({"referrer":"LOAD Stand.Abw. [%] ","count":(standardabweichung*10).toFixed(0)});
+      for (var i=0;i<temp.length;i++){
+        woeblung+= Math.pow((temp[i][0]-mittelwert)/standardabweichung,4)*temp[i][1];
+        }
+      woeblung /= N;
+      results.push({"referrer":"LOAD Kurtosis [%^4] ","count":(woeblung*10).toFixed(0)});
+      useage = mittelwert*woeblung;
+      // RPM
+      var mittelwert = 0;
+      var standardabweichung = 0;
+      var woeblung = 0;
+      var temp = $.map(speed_totals,function(i,n){return [[parseInt(n.substring(0,2)),i]]});
+      var N = $.map(speed_totals,function(i,n){return [i] }).reduce(function(pv, cv) { return pv + cv; }, 0);
+      //
+      for (var i=0;i<temp.length;i++){
+          mittelwert+=temp[i][0]*temp[i][1];
+        }
+      mittelwert /= N;
+      results.push({"referrer":"RPM Mittelwert [rpm] ","count":(mittelwert*500).toFixed(0)});
+      for (var i=0;i<temp.length;i++){
+          standardabweichung+=Math.pow(temp[i][0]-mittelwert,2)*temp[i][1];
+        }
+      standardabweichung /= N;
+      standardabweichung = Math.sqrt(standardabweichung);
+      if (standardabweichung==0){standardabweichung=0.0009;}
+      results.push({"referrer":"RPM Stand.Abw. [rpm] ","count":(standardabweichung*500).toFixed(0)});
+      if (temp.length==1){mittelwert*=0.99;}
+      for (var i=0;i<temp.length;i++){
+          woeblung+= Math.pow((temp[i][0]-mittelwert)/standardabweichung,4)*temp[i][1];
+        }
+        woeblung /= N;
+        results.push({"referrer":"RPM Kurtosis [rpm^4] ","count":(woeblung*500).toFixed(0)});
+      //
+      useage *= mittelwert*woeblung;
+      results.push({"referrer":"_________________________","count":"===="});
+      results.push({"referrer":"Modellbasierter Maschinen\n Nutzungsindex","count":useage.toFixed(0)});
+      return results;
     },
 
     /**
@@ -455,7 +508,7 @@ var CountData = function() {
       // }]
       newCountData.forEach(function(count) {
         // Update the host who last calculated the counts
-        setLastUpdatedBy(count.host);
+        setLastUpdatedBy(count.host+" um "+ new Date(count.timestamp).toUTCString());
         // Add individual referrer counts
         count.referrerCounts.forEach(function(refCount) {
         	//if (refCount.referrer.substring(3, 6) == "RPM"){
