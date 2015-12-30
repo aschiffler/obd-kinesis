@@ -461,6 +461,7 @@ var CountData = function() {
         }
       woeblung /= N;
       results.push({"referrer":"LOAD Kurtosis [%^4] ","count":(woeblung*5).toFixed(0)});
+      results.push({"referrer":"LOAD Messerte in 60s [] ","count":N});
       useage = mittelwert*woeblung;
       // RPM
       var mittelwert = 0;
@@ -487,6 +488,7 @@ var CountData = function() {
         }
         woeblung /= N;
         results.push({"referrer":"RPM Kurtosis [rpm^4] ","count":(woeblung*300).toFixed(0)});
+	results.push({"referrer":"RPM Messwerte in 60s [] ","count":N});
       //
       useage *= mittelwert*woeblung;
       results.push({"referrer":"_________________________","count":"===="});
