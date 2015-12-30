@@ -88,7 +88,7 @@ var Graph = function() {
       graph.getOptions().yaxes[0].min = 0;
 
       graph.getOptions().xaxes[0].min = -1;
-      graph.getOptions().xaxes[0].max = 12;
+      graph.getOptions().xaxes[0].max = 22;
 
       // Redraw the graph data and axes
       graph.draw();
@@ -102,11 +102,11 @@ var Graph = function() {
  */
 var UIHelper = function(data, graph) {
   // How frequently should we poll for new data and update the graph?
-  var updateIntervalInMillis = 5000;
+  var updateIntervalInMillis = 2000;
   // How often should the top N display be updated?
   var intervalsPerTopNUpdate = 1;
   // How far back should we fetch data at every interval?
-  var rangeOfDataToFetchEveryIntervalInSeconds = 6;
+  var rangeOfDataToFetchEveryIntervalInSeconds = 2;
   // What should N be for our Top N display?
   var topNToCalculate = 3;
   // Keep track of when we last updated the top N display.
@@ -444,22 +444,23 @@ var CountData = function() {
       var N = $.map(load_totals,function(i,n){return [i] }).reduce(function(pv, cv) { return pv + cv; }, 0);
       //
       for (var i=0;i<temp.length;i++){
-          mittelwert+=temp[i][0]*temp[i][1];
+          mittelwert+=(temp[i][0]+0.5)*temp[i][1];
         }
       mittelwert /= N;
-      results.push({"referrer":"LOAD Mittelwert [%] ","count":(mittelwert*10).toFixed(0)});
+      results.push({"referrer":"LOAD Mittelwert [%] ","count":(mittelwert*5).toFixed(0)});
       for (var i=0;i<temp.length;i++){
-          standardabweichung+=Math.pow(temp[i][0]-mittelwert,2)*temp[i][1];
+          standardabweichung+=Math.pow(temp[i][0]+0.5-mittelwert,2)*temp[i][1];
         }
       standardabweichung /= N;
       standardabweichung = Math.sqrt(standardabweichung);
-      if (standardabweichung==0){standardabweichung=0.01;}
-      results.push({"referrer":"LOAD Stand.Abw. [%] ","count":(standardabweichung*10).toFixed(0)});
+      if (standardabweichung<0.01){standardabweichung=0.1;}
+      results.push({"referrer":"LOAD Stand.Abw. [%] ","count":(standardabweichung*5).toFixed(0)});
+      if (standardabweichung<=0.1){mittelwert*=0.95;}
       for (var i=0;i<temp.length;i++){
-        woeblung+= Math.pow((temp[i][0]-mittelwert)/standardabweichung,4)*temp[i][1];
+        woeblung+= Math.pow((temp[i][0]+0.5-mittelwert)/standardabweichung,4)*temp[i][1];
         }
       woeblung /= N;
-      results.push({"referrer":"LOAD Kurtosis [%^4] ","count":(woeblung*10).toFixed(0)});
+      results.push({"referrer":"LOAD Kurtosis [%^4] ","count":(woeblung*5).toFixed(0)});
       useage = mittelwert*woeblung;
       // RPM
       var mittelwert = 0;
@@ -469,23 +470,23 @@ var CountData = function() {
       var N = $.map(speed_totals,function(i,n){return [i] }).reduce(function(pv, cv) { return pv + cv; }, 0);
       //
       for (var i=0;i<temp.length;i++){
-          mittelwert+=temp[i][0]*temp[i][1];
+          mittelwert+=(temp[i][0]+0.5)*temp[i][1];
         }
       mittelwert /= N;
-      results.push({"referrer":"RPM Mittelwert [rpm] ","count":(mittelwert*500).toFixed(0)});
+      results.push({"referrer":"RPM Mittelwert [rpm] ","count":(mittelwert*300).toFixed(0)});
       for (var i=0;i<temp.length;i++){
-          standardabweichung+=Math.pow(temp[i][0]-mittelwert,2)*temp[i][1];
+          standardabweichung+=Math.pow(temp[i][0]+0.5-mittelwert,2)*temp[i][1];
         }
       standardabweichung /= N;
       standardabweichung = Math.sqrt(standardabweichung);
-      if (standardabweichung==0){standardabweichung=0.0009;}
-      results.push({"referrer":"RPM Stand.Abw. [rpm] ","count":(standardabweichung*500).toFixed(0)});
-      if (temp.length==1){mittelwert*=0.99;}
+      if (standardabweichung<0.01){standardabweichung=0.1;}
+      results.push({"referrer":"RPM Stand.Abw. [rpm] ","count":(standardabweichung*300).toFixed(0)});
+      if (standardabweichung<=0.1){mittelwert*=0.95;}
       for (var i=0;i<temp.length;i++){
-          woeblung+= Math.pow((temp[i][0]-mittelwert)/standardabweichung,4)*temp[i][1];
+          woeblung+= Math.pow((temp[i][0]+0.5-mittelwert)/standardabweichung,4)*temp[i][1];
         }
         woeblung /= N;
-        results.push({"referrer":"RPM Kurtosis [rpm^4] ","count":(woeblung*500).toFixed(0)});
+        results.push({"referrer":"RPM Kurtosis [rpm^4] ","count":(woeblung*300).toFixed(0)});
       //
       useage *= mittelwert*woeblung;
       results.push({"referrer":"_________________________","count":"===="});
